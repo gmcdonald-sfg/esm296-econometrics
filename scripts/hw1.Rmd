@@ -1,0 +1,94 @@
+---
+title: "ESM296: Applied Econometrics - Homework 1"
+author: Gavin McDonald
+date: January 19, 2018
+output:
+  html_document:
+    df_print: paged
+editor_options:
+  chunk_output_type: console
+---
+
+
+```{r setup, eval = TRUE, echo = FALSE, results = "asis", warning=FALSE, include=FALSE}
+# Load data and packages, configure markdown
+library(tidyverse)
+library(broom)
+library(stargazer)
+price_df <- read_csv("../data/hw1_HPRICE2.csv")
+knitr::opts_chunk$set(eval = TRUE, echo = FALSE, results = "asis", warning=FALSE)
+```
+
+# Question 1
+## (a) Interpret the estimated coefficients.
+
+## (b) What is the meaning of the regression R^2?
+45% of the variance in student height can be explained by the average height of their parents.
+
+## (c) What is the prediction for the height of a child whose parents have an average height of 70.06 inches?
+`r signif(19.6 + 0.73 * 70.06,4)` inches
+
+## (d) Given the positive intercept and the fact that the slope lies between zero and one, what can you say about the height of students who have quite tall parents? Who have quite short parents?
+Students who have quite tall parents (greater than `r signif(19.6/.27, 4)`) will likely be shorter than their parents. Students who have quite short parents (less than `r signif(19.6/.27, 4)`) will likely be taller than their parents.
+
+## (e) Test for the statistical significance of the slope coefficient.
+
+## (f) If children, on average, were expected to be of the same height as their parents, then this would imply two hypotheses, one for the slope and one for the intercept.
+
+### (i) What should the null hypothesis be for the intercept? Calculate the relevant t-statistic and carry out the hypothesis test at the 1% level
+H0: β0 = 0
+
+### (ii) What should the null hypothesis be for the slope? Calculate the relevant t-statisticand carry out the hypothesis test at the 5% level
+H0: β1 = 0
+
+# Question 2
+## Define models
+```{r define_models}
+price_model_complete <- lm(price ~ nox + rooms + stratio, data = price_df)
+tidy_price_model_complete <- tidy(price_model_complete)
+rsquared_price_model_complete <- glance(price_model_complete)$r.squared
+
+price_model_nox <- lm(price ~ nox, data = price_df)
+rsquared_price_model_nox <- glance(price_model_nox)$r.squared
+
+price_model_stratio <- lm(price ~ stratio, data = price_df)
+```
+
+## (a) What is the effect of adding an additional room on the house price, holding NOx concentrations and student-teacher ratio constant?
+The model is summarized as follows:
+
+```{r, results='asis'}
+stargazer(price_model_complete, type = 'html')
+```
+
+The effect of adding an additional room on house price, all else constant, is `r (tidy_price_model_complete %>% filter(term == "rooms") %>% .$estimate) %>% signif(4)` dollars per room.
+
+## (b) What is the estimated effect on house values of reducing NOx concentrations by 2.5 parts per 100 million?
+
+The estimated effect, all else constant, is a price change of `r (tidy_price_model_complete %>% filter(term == "nox") %>% .$estimate * 2.5) %>% signif(4)` dollars.
+
+## (c) What percent of the variation in house values that is explained by NOx concentrations, number of rooms, and student-teacher ratio? 
+The percent of the variation in house values is explained by NOx concentrations, number of rooms, and student-teacher ratio is `r paste0(round(rsquared_price_model_complete,3)*100,"%")` (see model summary above)
+
+## What percent of the variation in house values is explained by NOx concentrations alone?
+The model is summarized as follows:
+
+```{r, results='asis'}
+stargazer(price_model_nox, type = 'html')
+```
+
+The percent of the variation in house values that is by just NOx is `r paste0(round(rsquared_price_model_nox,3)*100,"%")`
+
+## (d) What is the predicted value of a house with NOx concentrations of 6, with 7 rooms, and a student-teacher ratio of 20? The actual price for that house was $20,000. Did the buyer overpay for this house?
+The housing price for this configuration is expected to be `r predict(price_model_complete, newdata = data.frame(nox = 6, rooms = 7, stratio = 20), interval = 'confidence')[,"fit"] %>% signif(4) %>% prettyNum(big.mark=",")` dollars (with a 95% confidence interval lower bound of `r predict(price_model_complete, newdata = data.frame(nox = 6, rooms = 7, stratio = 20), interval = 'confidence')[,"lwr"] %>% signif(4) %>% prettyNum(big.mark=",")` and an upper bound of `r predict(price_model_complete, newdata = data.frame(nox = 6, rooms = 7, stratio = 20), interval = 'confidence')[,"upr"] %>% signif(4) %>% prettyNum(big.mark=",")`. The buyer underpaid for this house.
+
+## (e) Test the null hypothesis that β1 and β2 jointly equal zero.
+We can build a reduced model soley based on β3, and then see if there is a significant difference between the full model and the reduced model using an ANOVA.
+
+```{r, results='asis'}
+b1_b2_equal_model <- anova(price_model_complete,price_model_stratio)
+stargazer(b1_b2_equal_model, type = 'html')
+```
+The p-value is less than 0.05 (p-value: `r tidy(b1_b2_equal_model)$p.value %>% max(na.rm=TRUE) %>% signif(3) %>% prettyNum()`), and thus β1 and β2 do not jointly equal zero.
+
+## (f) Test the null hypothesis that β1 = β3 against the two-sided alternative.
