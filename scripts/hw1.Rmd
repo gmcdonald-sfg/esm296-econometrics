@@ -1,7 +1,7 @@
 ---
 title: "ESM296: Applied Econometrics - Homework 1"
 author: Gavin McDonald
-date: January 19, 2018
+date: February 5, 2018
 output:
   html_document:
     df_print: paged
@@ -15,31 +15,35 @@ editor_options:
 library(tidyverse)
 library(broom)
 library(stargazer)
-price_df <- read_csv("../data/hw1_HPRICE2.csv")
+library(car)
+library(here)
+library(car)
+price_df <- read_csv(here("data","hw1_HPRICE2.csv"))
 knitr::opts_chunk$set(eval = TRUE, echo = FALSE, results = "asis", warning=FALSE)
 ```
 
 # Question 1
 ## (a) Interpret the estimated coefficients.
 
-## (b) What is the meaning of the regression R^2?
+## (b) What is the meaning of the regression R^2^?
 45% of the variance in student height can be explained by the average height of their parents.
 
 ## (c) What is the prediction for the height of a child whose parents have an average height of 70.06 inches?
 `r signif(19.6 + 0.73 * 70.06,4)` inches
 
 ## (d) Given the positive intercept and the fact that the slope lies between zero and one, what can you say about the height of students who have quite tall parents? Who have quite short parents?
-Students who have quite tall parents (greater than `r signif(19.6/.27, 4)`) will likely be shorter than their parents. Students who have quite short parents (less than `r signif(19.6/.27, 4)`) will likely be taller than their parents.
+Students who have quite tall parents (greater than `r signif(19.6/.27, 4)`) will likely be shorter than their parents. Students who have quite short parents (less than `r signif(19.6/.27, 4)`) will likely be taller than their parents. In other words, this represents the concept of regression toward the mean.
 
 ## (e) Test for the statistical significance of the slope coefficient.
+We first find the t-statistic, which is calculated by dividing the slope by the heteroskedasticity-robust standard error (`r signif(0.73/0.1, 3)`). We next combine this with the degrees of freedom (`r 110 -1`) to determine a p-value of `r pt(0.73 / .1 , df = 110 - 1, lower=FALSE) %>% signif(3) %>% prettyNum()`. The slope is therefore statistically significant.
 
 ## (f) If children, on average, were expected to be of the same height as their parents, then this would imply two hypotheses, one for the slope and one for the intercept.
 
 ### (i) What should the null hypothesis be for the intercept? Calculate the relevant t-statistic and carry out the hypothesis test at the 1% level
-H0: β0 = 0
+The null hypothesis is H0: β0 = 0. We first find the t-statistic, which is calculated by dividing the intercept by the heteroskedasticity-robust standard error (`r signif(19.6/7.2, 3)`). We next combine this with the degrees of freedom (`r 110 -1`) to determine a p-value of `r pt(19.6/7.2 , df = 110 - 1, lower=FALSE) %>% signif(3) %>% prettyNum()`. The slope is therefore statistically significant at the 1% level and we reject the null hypothesis.
 
 ### (ii) What should the null hypothesis be for the slope? Calculate the relevant t-statisticand carry out the hypothesis test at the 5% level
-H0: β1 = 0
+The null hypothesis is H0: β1 = 0. We first find the t-statistic, which is calculated by dividing the slope by the heteroskedasticity-robust standard error (`r signif(0.73/0.1, 3)`). We next combine this with the degrees of freedom (`r 110 -1`) to determine a p-value of `r pt(0.73 / .1 , df = 110 - 1, lower=FALSE) %>% signif(3) %>% prettyNum()`. The slope is therefore statistically significant at the 5% level and we reject the null hypothesis.
 
 # Question 2
 ## Define models
@@ -83,12 +87,19 @@ The percent of the variation in house values that is by just NOx is `r paste0(ro
 The housing price for this configuration is expected to be `r predict(price_model_complete, newdata = data.frame(nox = 6, rooms = 7, stratio = 20), interval = 'confidence')[,"fit"] %>% signif(4) %>% prettyNum(big.mark=",")` dollars (with a 95% confidence interval lower bound of `r predict(price_model_complete, newdata = data.frame(nox = 6, rooms = 7, stratio = 20), interval = 'confidence')[,"lwr"] %>% signif(4) %>% prettyNum(big.mark=",")` and an upper bound of `r predict(price_model_complete, newdata = data.frame(nox = 6, rooms = 7, stratio = 20), interval = 'confidence')[,"upr"] %>% signif(4) %>% prettyNum(big.mark=",")`. The buyer underpaid for this house.
 
 ## (e) Test the null hypothesis that β1 and β2 jointly equal zero.
-We can build a reduced model soley based on β3, and then see if there is a significant difference between the full model and the reduced model using an ANOVA.
+We can perform a linear hypothesis test on the complete model using β1 = β2 = 0, which is summarized as follows.
 
 ```{r, results='asis'}
-b1_b2_equal_model <- anova(price_model_complete,price_model_stratio)
-stargazer(b1_b2_equal_model, type = 'html')
+b1_b2_equal0_model <- linearHypothesis(price_model_complete, c("nox = 0", "rooms = 0"))
+stargazer(b1_b2_equal0_model, type = 'html')
 ```
-The p-value is less than 0.05 (p-value: `r tidy(b1_b2_equal_model)$p.value %>% max(na.rm=TRUE) %>% signif(3) %>% prettyNum()`), and thus β1 and β2 do not jointly equal zero.
+The p-value is less than 0.05 (p-value: `r tidy(b1_b2_equal0_model)$p.value %>% max(na.rm=TRUE) %>% signif(3) %>% prettyNum()`), and thus β1 and β2 do not jointly equal zero.
 
 ## (f) Test the null hypothesis that β1 = β3 against the two-sided alternative.
+We can perform a linear hypothesis test on the complete model using β1 = β3, which is summarized as follows.
+
+```{r, results='asis'}
+b1_b3_equal_model <- linearHypothesis(price_model_complete, c("nox = stratio"))
+stargazer(b1_b3_equal_model, type = 'html')
+```
+The p-value is greater than 0.05 (p-value: `r tidy(b1_b3_equal_model)$p.value %>% max(na.rm=TRUE) %>% signif(3) %>% prettyNum()`), and thus β1 does not equal β3.
