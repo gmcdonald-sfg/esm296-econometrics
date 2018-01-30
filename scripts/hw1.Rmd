@@ -35,15 +35,15 @@ knitr::opts_chunk$set(eval = TRUE, echo = FALSE, results = "asis", warning=FALSE
 Students who have quite tall parents (greater than `r signif(19.6/.27, 4)`) will likely be shorter than their parents. Students who have quite short parents (less than `r signif(19.6/.27, 4)`) will likely be taller than their parents. In other words, this represents the concept of regression toward the mean.
 
 ## (e) Test for the statistical significance of the slope coefficient.
-We first find the t-statistic, which is calculated by dividing the slope by the heteroskedasticity-robust standard error (`r signif(0.73/0.1, 3)`). We next combine this with the degrees of freedom (`r 110 -1`) to determine a p-value of `r pt(0.73 / .1 , df = 110 - 1, lower=FALSE) %>% signif(3) %>% prettyNum()`. The slope is therefore statistically significant.
+The null hypothesis is H0: β1 = 0. We first find the t-statistic, which is calculated by dividing the slope (0.73) minus the hypothesized value (0) by the heteroskedasticity-robust standard error (0.1) (t-statistic: `r signif(0.73/0.1, 3)`). We next combine this with the degrees of freedom (`r 110 -1`) to determine a p-value of `r pt(0.73 / .1 , df = 110 - 1, lower=FALSE) %>% signif(3) %>% prettyNum()`. The slope is therefore statistically significant and we reject the null hypothesis.
 
 ## (f) If children, on average, were expected to be of the same height as their parents, then this would imply two hypotheses, one for the slope and one for the intercept.
 
 ### (i) What should the null hypothesis be for the intercept? Calculate the relevant t-statistic and carry out the hypothesis test at the 1% level
-The null hypothesis is H0: β0 = 0. We first find the t-statistic, which is calculated by dividing the intercept by the heteroskedasticity-robust standard error (`r signif(19.6/7.2, 3)`). We next combine this with the degrees of freedom (`r 110 -1`) to determine a p-value of `r pt(19.6/7.2 , df = 110 - 1, lower=FALSE) %>% signif(3) %>% prettyNum()`. The slope is therefore statistically significant at the 1% level and we reject the null hypothesis.
+The null hypothesis is H0: β0 = 0. We first find the t-statistic, which is calculated by dividing the intercept (19.6) minus the hypothesized intercept (0) by the heteroskedasticity-robust standard error (7.2) (t-statistic: `r signif(19.6/7.2, 3)`). We next combine this with the degrees of freedom (`r 110 -1`) to determine a p-value of `r pt(19.6/7.2 , df = 110 - 1, lower=FALSE) %>% signif(3) %>% prettyNum()`. We therefore reject the null hypothesis.
 
 ### (ii) What should the null hypothesis be for the slope? Calculate the relevant t-statisticand carry out the hypothesis test at the 5% level
-The null hypothesis is H0: β1 = 0. We first find the t-statistic, which is calculated by dividing the slope by the heteroskedasticity-robust standard error (`r signif(0.73/0.1, 3)`). We next combine this with the degrees of freedom (`r 110 -1`) to determine a p-value of `r pt(0.73 / .1 , df = 110 - 1, lower=FALSE) %>% signif(3) %>% prettyNum()`. The slope is therefore statistically significant at the 5% level and we reject the null hypothesis.
+The null hypothesis is H0: β1 = 1. We first find the t-statistic, which is calculated by dividing the slope (0.73) minus the hypothesized slope (1) by the heteroskedasticity-robust standard error (0.1) (t-statistic: `r signif((0.73 - 1)/0.1, 3)`). We next combine this with the degrees of freedom (`r 110 -1`) to determine a p-value of `r pt((0.73 - 1)/0.1 , df = 110 - 1, lower=FALSE) %>% signif(3) %>% prettyNum()`. We therefore do not reject the null hypothesis.
 
 # Question 2
 ## Define models
