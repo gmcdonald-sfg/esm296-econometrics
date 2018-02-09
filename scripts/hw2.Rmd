@@ -1,0 +1,125 @@
+---
+title: "ESM296: Applied Econometrics - Homework 2"
+author: Gavin McDonald
+date: February 14, 2018
+output:
+  html_document:
+    df_print: paged
+editor_options:
+  chunk_output_type: console
+---
+
+
+```{r setup, eval = TRUE, echo = FALSE, results = "asis", warning=FALSE, include=FALSE}
+# Load data and packages, configure markdown
+library(tidyverse)
+library(broom)
+library(stargazer)
+library(car)
+library(here)
+library(car)
+library(readr)
+library(here)
+hw2_df <- read_csv(here("data","HW2_GPA2.csv"))
+knitr::opts_chunk$set(eval = TRUE, echo = FALSE, results = "asis", warning=FALSE)
+```
+
+# Question 1
+
+## (a) What is the effect of an additional year of schooling on hourly earnings?
+
+On average, an additional year of schooling is related to an 8.3% increase in hourly wages.
+
+## (b) Test for the statistical significance of each of the coefficients.
+
+Test null hypothesis for each coefficient that each coefficient is 0.
+
+The null hypothesis for *Educ* is H0: β1 = 0. We first find the t-statistic, which is calculated by dividing the slope (.101) minus the hypothesized value (0) by the heteroskedasticity-robust standard error (.012) (t-statistic: `r signif(.101/.012, 3)`). We next combine this with the degrees of freedom (`r 253 - 4`) to determine a p-value of `r pt(.101/.012 , df = 253 - 4, lower=FALSE) %>% signif(3) %>% prettyNum()`. The slope is therefore statistically significant and we reject the null hypothesis.
+
+The null hypothesis for *Exper* is H0: β2 = 0. We first find the t-statistic, which is calculated by dividing the slope (.033) minus the hypothesized value (0) by the heteroskedasticity-robust standard error (.006) (t-statistic: `r signif(.033/.006, 3)`). We next combine this with the degrees of freedom (`r 253 - 4`) to determine a p-value of `r pt(.033/.006 , df = 253 - 4, lower=FALSE) %>% signif(3) %>% prettyNum()`. The slope is therefore statistically significant and we reject the null hypothesis.
+
+The null hypothesis for *Exper^2^* is H0: β3 = 0. We first find the t-statistic, which is calculated by dividing the slope (.0005) minus the hypothesized value (0) by the heteroskedasticity-robust standard error (.0001) (t-statistic: `r signif(.0005/.0001, 3)`). We next combine this with the degrees of freedom (`r 253 - 4`) to determine a p-value of `r pt(.0005/.0001 , df = 253 - 4, lower=FALSE) %>% signif(3) %>% prettyNum()`. The slope is therefore statistically significant and we reject the null hypothesis.
+
+## Why has the coefficient on education changed little compared to (a)? 
+
+*Exper* is actually a linear function of *Educ*. They are therefore strongly multi-collinear.
+
+## (d) Are the coefficients of the two added binary variables individually statistically significant? 
+
+The null hypothesis for *Female* is H0: β5 = 0. We first find the t-statistic, which is calculated by dividing the slope (.289) minus the hypothesized value (0) by the heteroskedasticity-robust standard error (.049) (t-statistic: `r signif(.289/.049, 3)`). We next combine this with the degrees of freedom (`r 253 - 4`) to determine a p-value of `r pt(.289/.049 , df = 253 - 4, lower=FALSE) %>% signif(3) %>% prettyNum()`. The slope is therefore statistically significant and we reject the null hypothesis.
+
+The null hypothesis for *Married* is H0: β6 = 0. We first find the t-statistic, which is calculated by dividing the slope (.062) minus the hypothesized value (0) by the heteroskedasticity-robust standard error (.056) (t-statistic: `r signif(.062/.056, 3)`). We next combine this with the degrees of freedom (`r 253 - 4`) to determine a p-value of `r pt(.062/.056 , df = 253 - 4, lower=FALSE) %>% signif(3) %>% prettyNum()`. The slope is therefore *not* statistically significant and we *do not* reject the null hypothesis.
+
+## In percentage terms, how much less do females earn per hour, controlling for education and experience?
+-28.9%
+
+## How much more do married people make?
++6.2%
+
+## What is the percentage difference in earnings between a single male and a married female?
+`r ((0 + 0) - (-.289 + .062)) * 100 %>% signif(3) `%
+
+## What is the marriage differential between males and females?
+0%
+
+## (d) Repeat the exercise in (c) of calculating the various percentage differences between gender and marital status
+
+## In percentage terms, how much less do females earn per hour, controlling for education and experience?
+15.8%
+
+## How much more do married people make?
+17.3%
+
+## What is the percentage difference in earnings between a single male and a married female?
+Single males earn `r ((0 + 0 + 0) - (-.158 + .173 -.218)) * 100 %>% signif(3) `% more than married females
+
+## What is the marriage differential between males and females?
+Males earn 21.8% more
+
+# Question 2
+## (a) Estimate the parameters of the regression model above by OLS. What is the estimated GPA differential between athletes and non-athletes?
+
+```{r}
+model_COLLGPA <- lm(colgpa ~ hsize + hsize^2 + hsperc + sat + female + athlete, data = hw2_df)
+stargazer(model_COLLGPA, type = 'html')
+```
+
+All else constant, the estimated GPA differential between athletes and non-athletes is 0.17, on average.
+
+## (b) Drop sat from the model and re-estimate the parameters of the regression model. What is the estimated GPA differential between athletes and non-athletes? Explain why the estimate is different than the one in (a).
+
+```{r}
+model_COLLGPA_no_sat <- lm(colgpa ~ hsize + hsize^2 + hsperc + female + athlete, data = hw2_df)
+stargazer(model_COLLGPA_no_sat, type = 'html')
+```
+
+When dropping SAT and keeping all else constant, the estimated GPA differential between athletes and non-athletes drops from 0.17 to 0.006, on average. The variables must be independent and exhibit weak multi-collinearity.
+
+## (c) Including the sat variable, re-estimate the model while allowing the effect of being an athlete to differ for males and females.
+
+Here is the model with the additional interaction term.
+```{r}
+model_COLLGPA_interaction <- lm(colgpa ~ hsize + hsize^2 + hsperc + sat + female + athlete + female * athlete, data = hw2_df)
+stargazer(model_COLLGPA_interaction, type = 'html')
+
+```
+
+## Test the null hypothesis that there is no difference in the GPA of female athletes and non-athletes (female:athlete = 0)
+
+```{r}
+female_athlete_diff <- linearHypothesis(model_COLLGPA_interaction, c("female:athlete = 0"))
+stargazer(female_athlete_diff, type = 'html')
+p_female <- female_athlete_diff$`Pr(>F)`[2] %>% signif(3)
+```
+
+We do not reject the null hypothesis (p-value = `r p_female`). Therefore, there is no difference in GPA of female athletes and non-athletes.
+
+## What about male athletes and non-athletes (female:athlete = 1)? 
+ 
+```{r}
+male_athlete_diff <- linearHypothesis(model_COLLGPA_interaction, c("female:athlete = 1"))
+stargazer(male_athlete_diff, type = 'html')
+p_male <- male_athlete_diff$`Pr(>F)`[2] %>% signif(3)
+```
+
+We reject the null hypothesis (p-value = `r p_male`). Therefore, there is a difference in GPA of male athletes and non-athletes.
